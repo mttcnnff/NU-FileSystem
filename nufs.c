@@ -19,9 +19,10 @@
 // implementation for: man 2 access 
 // Checks if a file exists. 
 
+// DO I NEED A MASK???
 int
 nufs_access(const char *path, int mask) {     
-    int rv = 0;     
+    int rv = storage_access(path);     
     printf("access(%s, %04o) -> %d\n", path, mask, rv);     
     return rv; 
 }
@@ -57,19 +58,15 @@ nufs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     while(curr != NULL) {
         memset(fullpath, '\0', sizeof(buf));
         strcpy(fullpath, path);
-        join_to_path(fullpath, curr->data);
+        char* filename = curr->data;
+        join_to_path(fullpath, filename);
         printf("LS: %s\n", fullpath);
+
+        storage_stat(fullpath, &st);
+        filler(buf, filename, &st, 0);
+
         curr = curr->next;
     }
-
-    // rv = nufs_getattr("/", &st);
-    // assert(rv == 0);
-
-    // filler(buf, ".", &st, 0);
-
-    // rv = nufs_getattr("/hello.txt", &st);
-    // assert(rv == 0);
-    // filler(buf, "hello.txt", &st, 0);
 
     printf("readdir(%s) -> %d\n", path, rv);
     return 0;

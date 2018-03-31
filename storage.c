@@ -83,3 +83,7 @@ int storage_set_time(const char* path, const struct timespec ts[2]) {
 slist* storage_list(const char* path) {
 	return directory_list(path);
 }
+
+int storage_access(const char* path) {
+	return tree_lookup(path);
+}
