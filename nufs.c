@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <dirent.h>
+//#include <dirent.h>
 #include <bsd/string.h>
 #include <assert.h>
 
@@ -15,6 +15,8 @@
 
 #include "storage.h"
 #include "util.h"
+#include "inode.h"
+#include "directory.h"
 
 // implementation for: man 2 access 
 // Checks if a file exists. 
@@ -22,7 +24,12 @@
 // DO I NEED A MASK???
 int
 nufs_access(const char *path, int mask) {     
-    int rv = storage_access(path);     
+    int status = storage_access(path); 
+    int rv = 0;
+    if (status == -1) {
+        rv = -1;
+    }
+
     printf("access(%s, %04o) -> %d\n", path, mask, rv);     
     return rv; 
 }
@@ -90,6 +97,12 @@ int
 nufs_mkdir(const char *path, mode_t mode)
 {
     int rv = nufs_mknod(path, mode | 040000, 0);
+    if (rv == 0) {
+        int inum = tree_lookup(path);
+        int parent_inum = get_parent_directory(path);
+        inode* dirnode = get_inode(inum);
+        directory_init(dirnode, inum, parent_inum, "");
+    }
     printf("mkdir(%s) -> %d\n", path, rv);
     return rv;
 }
