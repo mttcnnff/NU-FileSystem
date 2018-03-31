@@ -11,14 +11,23 @@
 //     int iptr; // single indirect pointer
 // } inode;
 
-// void print_inode(inode* node);
+void 
+print_inode(inode* node) {
+	printf("==== inode ====\n");
+	printf("Refs: %d\n", node->refs);
+	printf("Mode: %d\n", node->mode);
+	printf("Size: %d\n", node->size);
+}
+
+
 inode* 
 get_inode(int inum) {
 	void* inode0 = get_inodes();
 	return (inode*)(inode0 + (inum*sizeof(inode)));
 }
 
-int alloc_inode() {
+int
+alloc_inode() {
 	void* ibm = get_inode_bitmap();
 	int inode_max = get_inode_max();
 	for (int i = 2; i < inode_max; i++) {
@@ -27,9 +36,10 @@ int alloc_inode() {
 		}
 
 		printf("First free inode found at: %d\n", i);
-		return 0;
+		bitmap_put(ibm, i, 1);
+		return i;
 	}
-	return 1;
+	return -1;
 }
 // void free_inode();
 // int grow_inode(inode* node, int size);

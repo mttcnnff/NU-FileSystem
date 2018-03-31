@@ -14,6 +14,7 @@
 #include <fuse.h>
 
 #include "storage.h"
+#include "util.h"
 
 // implementation for: man 2 access 
 // Checks if a file exists. 
@@ -30,20 +31,12 @@ nufs_access(const char *path, int mask) {
 int
 nufs_getattr(const char *path, struct stat *st)
 {
-    int rv = 0;
-    if (strcmp(path, "/") == 0) {
-        st->st_mode = 040755; // directory
-        st->st_size = 0;
-        st->st_uid = getuid();
+    int rv = storage_stat(path, st);
+
+    if (rv == -1) {
+        rv = -ENOENT;
     }
-    else if (strcmp(path, "/hello.txt") == 0) {
-        st->st_mode = 0100644; // regular file
-        st->st_size = 6;
-        st->st_uid = getuid();
-    }
-    else {
-        rv = -1;
-    }
+
     printf("getattr(%s) -> (%d) {mode: %04o, size: %ld}\n", path, rv, st->st_mode, st->st_size);
     return rv;
 }
@@ -54,17 +47,29 @@ int
 nufs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
              off_t offset, struct fuse_file_info *fi)
 {
+    slist* entries = storage_list(path);
+
     struct stat st;
     int rv;
 
-    rv = nufs_getattr("/", &st);
-    assert(rv == 0);
+    slist* curr = entries;
+    char fullpath[300];
+    while(curr != NULL) {
+        memset(fullpath, '\0', sizeof(buf));
+        strcpy(fullpath, path);
+        join_to_path(fullpath, curr->data);
+        printf("LS: %s\n", fullpath);
+        curr = curr->next;
+    }
 
-    filler(buf, ".", &st, 0);
+    // rv = nufs_getattr("/", &st);
+    // assert(rv == 0);
 
-    rv = nufs_getattr("/hello.txt", &st);
-    assert(rv == 0);
-    filler(buf, "hello.txt", &st, 0);
+    // filler(buf, ".", &st, 0);
+
+    // rv = nufs_getattr("/hello.txt", &st);
+    // assert(rv == 0);
+    // filler(buf, "hello.txt", &st, 0);
 
     printf("readdir(%s) -> %d\n", path, rv);
     return 0;
@@ -75,7 +80,9 @@ nufs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 int
 nufs_mknod(const char *path, mode_t mode, dev_t rdev)
 {
-    int rv = -1;
+    //ignore rdev
+    int rv = storage_mknod(path, mode);
+
     printf("mknod(%s, %04o) -> %d\n", path, mode, rv);
     return rv;
 }
@@ -174,7 +181,7 @@ nufs_write(const char *path, const char *buf, size_t size, off_t offset, struct 
 int
 nufs_utimens(const char* path, const struct timespec ts[2])
 {
-    int rv = -1;
+    int rv = storage_set_time(path, ts);
     printf("utimens(%s, [%ld, %ld; %ld %ld]) -> %d\n",
            path, ts[0].tv_sec, ts[0].tv_nsec, ts[1].tv_sec, ts[1].tv_nsec, rv);
 	return rv;

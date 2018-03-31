@@ -11,6 +11,7 @@ void* pages_get_page(int pnum);
 void* get_pages_bitmap();
 void* get_inode_bitmap();
 void* get_inodes();
+int get_root_inode();
 int get_inode_max();
 int alloc_page();
 void free_page(int pnum);

@@ -3,12 +3,15 @@
 #ifndef INODE_H
 #define INODE_H
 
+#include <time.h>
+
 typedef struct inode {
     int refs; // reference count
     int mode; // permission & type
     int size; // bytes
     int ptrs[2]; // direct pointers to pages
     int iptr; // single indirect pointer page
+    time_t timestamp; //last edited?
 } inode;
 
 void print_inode(inode* node);

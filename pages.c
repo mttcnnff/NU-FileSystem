@@ -17,12 +17,14 @@
 #include "util.h"
 #include "bitmap.h"
 #include "inode.h"
+#include "directory.h"
 
 const int PAGE_COUNT = 256;
 const int NUFS_SIZE  = 4096 * 256; // 1MB
 
 static int   pages_fd   = -1;
 static void* pages_base =  0;
+static int   rootinum;
 
 void
 pages_init(const char* path)
@@ -42,7 +44,25 @@ pages_init(const char* path)
     bitmap_put(pbm, 1, 1);
     bitmap_put(ibm, 0, 1);
     bitmap_put(ibm, 1, 1);
-    alloc_inode();
+
+    rootinum = alloc_inode();
+    inode* root = get_inode(rootinum);
+    root->refs = 1;
+    root->mode = 040755;
+    root->size = 0;
+    int rootpage = alloc_page();
+    root->ptrs[0] = rootpage;
+    //directory_init(root, rootnum, "/");
+    void* page = pages_get_page(rootpage);
+    dirent* newdir = (dirent*)page;
+
+    //directory* newdir = (directory*)page;
+    directory_init(root, rootinum, rootinum, "/");
+    tree_lookup("/.");
+    tree_lookup("/..");
+    tree_lookup("/hello.txt");
+    //printf("Made Directory: %s, in inode: %d\n", newdir->dirname, newdir->inum);
+    //directory_put(root, ".", 2);
 }
 
 void
@@ -79,6 +99,11 @@ get_inodes()
 }
 
 int
+get_root_inode() {
+    return rootinum;
+}
+
+int
 get_inode_max() {
     return PAGE_COUNT;
 }
@@ -88,7 +113,7 @@ alloc_page()
 {
     void* pbm = get_pages_bitmap();
 
-    for (int ii = 1; ii < PAGE_COUNT; ++ii) {
+    for (int ii = 2; ii < PAGE_COUNT; ++ii) {
         if (!bitmap_get(pbm, ii)) {
             bitmap_put(pbm, ii, 1);
             printf("+ alloc_page() -> %d\n", ii);

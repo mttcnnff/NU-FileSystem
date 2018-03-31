@@ -53,5 +53,42 @@ join_to_path(char* buf, char* item)
 }
 
 
+static void
+get_filename(char* buf, const char* path) {
+    int length = strlen(path);
+    int i = length - 1;
+    for (i; i > -1; i--) {
+        if (path[i] == '/') {
+            break;
+        }
+    }
+
+    memset(buf, '\0', sizeof(buf));
+    strcpy(buf, path + i + 1);
+}
+
+static void 
+get_parent_path(char* buf, const char* path) {
+    int length = strlen(path);
+    int i = length - 1;
+    for (i; i > -1; i--) {
+        if (path[i] == '/') {
+            if (i > 0) {
+                i--;
+            }   
+            break;
+        }
+    }
+
+    if (i == 0) {
+        memset(buf, '\0', sizeof(buf));
+        strcpy(buf, "/");
+    } else {
+        memset(buf, '\0', sizeof(buf));
+        strncpy(buf, path, i+1);
+    }
+}
+
+
 
 #endif
