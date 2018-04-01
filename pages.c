@@ -50,17 +50,9 @@ pages_init(const char* path)
     root->refs = 1;
     root->mode = 040755;
     root->size = 0;
-    int rootpage = alloc_page();
-    root->ptrs[0] = rootpage;
-    //directory_init(root, rootnum, "/");
-    void* page = pages_get_page(rootpage);
-    dirent* newdir = (dirent*)page;
 
     //directory* newdir = (directory*)page;
     directory_init(root, rootinum, rootinum, "/");
-    tree_lookup("/.");
-    tree_lookup("/..");
-    tree_lookup("/hello.txt");
     //printf("Made Directory: %s, in inode: %d\n", newdir->dirname, newdir->inum);
     //directory_put(root, ".", 2);
 }
@@ -127,6 +119,9 @@ alloc_page()
 void
 free_page(int pnum)
 {
+    if (pnum == -1) {
+        return;
+    }
     printf("+ free_page(%d)\n", pnum);
     void* pbm = get_pages_bitmap();
     bitmap_put(pbm, pnum, 0);

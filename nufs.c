@@ -110,7 +110,8 @@ nufs_mkdir(const char *path, mode_t mode)
 int
 nufs_unlink(const char *path)
 {
-    int rv = -1;
+    
+    int rv = storage_unlink(path);
     printf("unlink(%s) -> %d\n", path, rv);
     return rv;
 }
@@ -126,7 +127,7 @@ nufs_link(const char *from, const char *to)
 int
 nufs_rmdir(const char *path)
 {
-    int rv = -1;
+    int rv = nufs_unlink(path);
     printf("rmdir(%s) -> %d\n", path, rv);
     return rv;
 }
@@ -136,15 +137,72 @@ nufs_rmdir(const char *path)
 int
 nufs_rename(const char *from, const char *to)
 {
-    int rv = -1;
-    printf("rename(%s => %s) -> %d\n", from, to, rv);
-    return rv;
+    int rv;
+
+    int inumfrom = tree_lookup(from);
+    if (inumfrom == -1) {
+        printf("ERROR-rename-from: %s d.n.e.\n", from);
+        return -1;
+    }
+    inode* nodefrom = get_inode(inumfrom);
+
+    int from_parent_inum = get_parent_directory(from);
+    inode* node_from_parent = get_inode(from_parent_inum);
+
+    int to_parent_inum = get_parent_directory(to);
+    if (to_parent_inum == -1) {
+        printf("ERROR-rename-to: %s d.n.e.\n", to);
+    }
+    inode* node_to_parent = get_inode(to_parent_inum);
+
+
+    char fromname[200];
+    get_filename(fromname, from);
+    directory_delete(node_from_parent, fromname);
+
+    int inumto = tree_lookup(to);
+    if (inumto == -1) {
+        // doesnt exist, add entry with new name in parent to directory
+        char toname[200];
+        get_filename(toname, to);
+        directory_put(node_to_parent, toname, inumfrom);
+        return 0;
+
+    } 
+    inode* nodeto = get_inode(inumto);
+
+    // does exist
+
+    if (is_file(nodeto) && is_file(nodefrom)) {
+        // rename
+        char newname[200];
+        get_filename(newname, to);
+        directory_put(node_to_parent, newname, inumfrom);
+        return 0;
+    }
+
+    if (is_dir(nodeto)) {
+        //if to is a directory -> put entry in to directory
+        char fromnewname[200];
+        get_filename(fromnewname, from);
+        directory_put(node_to_parent, fromnewname, inumfrom);
+        return 0;
+
+    }
+    return -1;
 }
 
 int
 nufs_chmod(const char *path, mode_t mode)
 {
-    int rv = -1;
+    int inum = tree_lookup(path);
+    if (inum == -1) {
+        printf("ERROR-Chmod: Can't find %s\n", path);
+        return -1;
+    }
+    inode* node = get_inode(inum);
+    node->mode = mode;
+    int rv = 0;
     printf("chmod(%s, %04o) -> %d\n", path, mode, rv);
     return rv;
 }

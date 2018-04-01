@@ -17,6 +17,7 @@ const int MAX_ENTRIES = 10;
 
 void 
 directory_init(inode* dd, int inum, int parent_inum, char* name) {
+	dd->ptrs[0] = alloc_page();
 	directory_put(dd, ".", inum);
 	directory_put(dd, "..", parent_inum);
 }
@@ -41,6 +42,13 @@ alloc_dirent(dirent* first) {
 	return NULL;
 }
 
+void
+free_dirent(dirent* entry) {
+	entry->used = 0;
+	entry->inum = -1;
+	memset(entry->name, '\0', sizeof(entry->name));
+}
+
 int
 directory_put(inode* dd, const char* name, int inum) {
 	int pnum = dd->ptrs[0];
@@ -58,6 +66,22 @@ directory_put(inode* dd, const char* name, int inum) {
 	open->inum = inum;
 	strncpy(open->name, name, sizeof(name));
 	return 0;
+}
+
+int 
+directory_delete(inode* dd, const char* name) {
+	int pnum = dd->ptrs[0];
+	void* page = pages_get_page(pnum);
+
+	dirent* first = (dirent*)page;
+	for (int i = 0; i < MAX_ENTRIES; i++) {
+		dirent* curr = directory_get_dirent(first, i);
+		if(streq(curr->name, name)) {
+			free_dirent(curr);
+			return 0;
+		}
+	}
+	return -1;
 }
 
 int 

@@ -30,6 +30,7 @@ int get_parent_directory(const char* path);
 int directory_put(inode* dd, const char* name, int inum);
 dirent* directory_get_dirent(dirent* first, int entnum);
 dirent* alloc_dirent(dirent* first);
+void free_dirent(dirent* entry);
 int directory_delete(inode* dd, const char* name);
 slist* directory_list(const char* path);
 void print_directory(inode* dd);

@@ -87,3 +87,26 @@ slist* storage_list(const char* path) {
 int storage_access(const char* path) {
 	return tree_lookup(path);
 }
+
+int
+storage_unlink(const char* path) {
+	if (streq(path, "/")) {
+		printf("Can't remove root dir.\n");
+		return -1;
+	}
+
+	int inum = tree_lookup(path);
+	int rv = free_inode(inum);
+	if (rv == -1) {
+		return -1;
+	}
+
+	int parent_inum = get_parent_directory(path);
+	inode* parent_inode = get_inode(parent_inum);
+
+	char filename[200];
+	get_filename(filename, path);
+
+	return directory_delete(parent_inode, filename);
+
+}
