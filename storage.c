@@ -40,7 +40,6 @@ int storage_mknod(const char* path, int mode) {
 		return -1;
 	}
 
-	printf("MODE RECIEVED: %d\n", mode);
 
 	inode* newnode = get_inode(inum);
 	newnode->refs = 1;
@@ -109,4 +108,35 @@ storage_unlink(const char* path) {
 
 	return directory_delete(parent_inode, filename);
 
+}
+
+int    
+storage_write(const char* path, const char* buf, size_t size, off_t offset) {
+	int inum = tree_lookup(path);
+	if (inum == -1) {
+		printf("ERROR:STORAGE-WRITE: %s d.n.e.\n", path);
+		return -1;
+	}
+
+	inode* node = get_inode(inum);
+	int pages[15];
+	int pages_count;
+	grow_inode(node, 4);
+	grow_inode(node, 4);
+	grow_inode(node, 3000);
+	grow_inode(node, 6000);
+	grow_inode(node, 9000);
+	grow_inode(node, 20000);
+	// if (offset + size > node->size) {
+	// 	grow_inode(node, offset + size);
+	// }
+
+
+
+	return 0;
+	/*
+    1) if offset + size > node size -> grow the inode to the necessary size
+    2) get start point to write at
+    3) 
+    */
 }

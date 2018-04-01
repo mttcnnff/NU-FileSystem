@@ -10,7 +10,7 @@ typedef struct inode {
     int mode; // permission & type
     int size; // bytes
     int ptrs[2]; // direct pointers to pages
-    int iptr; // single indirect
+    int iptr; // single indirect to page of pnums
     time_t timestamp; //last edited?
 } inode;
 
@@ -23,5 +23,6 @@ int shrink_inode(inode* node, int size);
 int inode_get_pnum(inode* node, int fpn);
 int is_file(inode* node);
 int is_dir(inode* node);
+void get_pages(int pages[], int* pages_count);
 
 #endif
