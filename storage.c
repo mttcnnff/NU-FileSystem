@@ -58,8 +58,10 @@ int storage_mknod(const char* path, int mode) {
 	get_filename(filename, path);
 	directory_put(parent_inode, filename, inum);
 
+
 	printf("Made inode: \n");
 	print_inode(newnode);
+	print_directory(parent_inode);
 
 	return 0;
 }
@@ -130,6 +132,11 @@ storage_write(const char* path, const char* buf, size_t size, off_t offset) {
 	}
 	get_pages(node, pages, &pages_count);
 
+	printf("Writing to pages: \n");
+	for (int i = 0; i < pages_count; i++) {
+		printf("%d\n", pages[i]);
+	}
+
 	int pageindex = offset / 4096;
 	int pageoffset = offset % 4096;
 	
@@ -137,6 +144,15 @@ storage_write(const char* path, const char* buf, size_t size, off_t offset) {
 	for (int i = pageindex; i < pages_count; i++) {
 		int pnum = pages[pageindex];
 		printf("Writing to page %d:%d\n", pageindex, pnum);
+		char* p = pages_get_page(pnum);
+		for (int i = 0; i < 4096; i++) {
+			if (p[i] != 0) {
+
+				printf("%s\n", p + (i*sizeof(char)));
+			} 
+		}
+
+
 		void* writepoint = pages_get_page(pnum) + pageoffset;
 		int blockspace = 4096 - pageoffset;
 		printf("blockspace: %d\n", blockspace);
@@ -148,6 +164,7 @@ storage_write(const char* path, const char* buf, size_t size, off_t offset) {
 			bytes_written = bytes_written + blockspace;
 		} else {
 			printf("Size left was < blockspace\n");
+
 			//we're able to write all the bytes written
 			memcpy(writepoint, buf + bytes_written, size);
 			printf("WROTE: %s\n", (char*)writepoint);

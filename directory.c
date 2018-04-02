@@ -29,13 +29,17 @@ directory_get_dirent(dirent* first, int entnum) {
 
 dirent* 
 alloc_dirent(dirent* first) {
+	printf("Size of dirent: %ld\n", sizeof(dirent));
+	dirent* curr = first;
 	for (int i = 0; i < MAX_ENTRIES; i++) {
-		dirent* curr = directory_get_dirent(first, i);
 		if (curr->used == 1) {
+			printf("dirent %d used: %s\n", i, curr->name);
+			curr = (void*)curr + sizeof(dirent);
 			continue;
 		}
 
 		printf("Free dirent found at: %d\n", i);
+		printf("@ address: %p\n", (void*)curr);
 		return curr;
 
 	}
@@ -52,9 +56,13 @@ free_dirent(dirent* entry) {
 int
 directory_put(inode* dd, const char* name, int inum) {
 	int pnum = dd->ptrs[0];
+	printf("Putting into directory at page %d\n", pnum);
 	void* page = pages_get_page(pnum);
+	printf("Page address: %p\n", page);
 
 	dirent* first = (dirent*)page;
+	printf("First dirent: %s\n", first->name);
+	printf("@ address: %p\n", (void*)first);
 	dirent* open = alloc_dirent(first);
 
 	if (open == NULL) {
@@ -64,7 +72,10 @@ directory_put(inode* dd, const char* name, int inum) {
 
 	open->used = 1;
 	open->inum = inum;
-	strncpy(open->name, name, sizeof(name));
+	memset(open->name, '\0', strlen(name + 1));
+	strncpy(open->name, name, strlen(name));
+	print_directory(dd);
+
 	return 0;
 }
 
@@ -73,13 +84,13 @@ directory_delete(inode* dd, const char* name) {
 	int pnum = dd->ptrs[0];
 	void* page = pages_get_page(pnum);
 
-	dirent* first = (dirent*)page;
+	dirent* curr = (dirent*)page;
 	for (int i = 0; i < MAX_ENTRIES; i++) {
-		dirent* curr = directory_get_dirent(first, i);
 		if(streq(curr->name, name)) {
 			free_dirent(curr);
 			return 0;
 		}
+		curr = (void*)curr + sizeof(dirent);
 	}
 	return -1;
 }
@@ -89,13 +100,14 @@ directory_lookup(inode* dd, const char* name) {
 	int pnum = dd->ptrs[0];
 	void* page = pages_get_page(pnum);
 
-	dirent* first = (dirent*)page;
+	dirent* curr = (dirent*)page;
 	for (int i = 0; i < MAX_ENTRIES; i++) {
-		dirent* curr = directory_get_dirent(first, i);
+		
 		if (strcmp(curr->name, name) == 0) {
 			//printf("Found \"%s\" at entry %d\n", name, i);
 			return curr->inum;
 		}
+		curr = (void*)curr + sizeof(dirent);
 	}
 	return -1;
 
@@ -160,16 +172,32 @@ directory_list(const char* path) {
 	void* page = pages_get_page(pnum);
 
 	slist* contents = NULL;
-	dirent* first = (dirent*)page;
+	dirent* curr = (dirent*)page;
 	for (int i = 0; i < MAX_ENTRIES; i++) {
-		dirent* curr = directory_get_dirent(first, i);
 		if (curr->used == 1) {
 			//printf("Pushing %s\n", curr->name);
 			contents = s_cons(curr->name, contents);
 			//printf("Found \"%s\" at entry %d\n", name, i);
 		}
+		curr = (void*)curr + sizeof(dirent);
 	}
 
 	return contents;
 
+}
+
+void
+print_directory(inode* dd) {
+	int pnum = dd->ptrs[0];
+	void* page = pages_get_page(pnum);
+
+	printf("Printind Directory: \n");
+	dirent* curr = (dirent*)page;
+	for (int i = 0; i < MAX_ENTRIES; i++) {
+		if (curr->used == 0) {
+			continue;
+		}
+		printf("%s -> %d\n", curr->name, curr->inum);
+		curr = (void*)curr + sizeof(dirent);
+	}
 }

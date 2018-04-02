@@ -53,7 +53,7 @@ nufs_getattr(const char *path, struct stat *st)
         rv = -ENOENT;
     }
 
-    printf("getattr(%s) -> (%d) {mode: %04o, size: %ld}\n", path, rv, st->st_mode, st->st_size);
+    //printf("getattr(%s) -> (%d) {mode: %04o, size: %ld}\n", path, rv, st->st_mode, st->st_size);
     return rv;
 }
 
@@ -66,6 +66,9 @@ int
 nufs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
              off_t offset, struct fuse_file_info *fi)
 {
+    int inum = tree_lookup(path);
+    inode* node = get_inode(inum);
+    print_directory(node);
     slist* entries = storage_list(path);
 
     struct stat st;

@@ -24,7 +24,7 @@ const int NUFS_SIZE  = 4096 * 256; // 1MB
 
 static int   pages_fd   = -1;
 static void* pages_base =  0;
-static int   rootinum;
+static int   rootinum = 2;
 
 void
 pages_init(const char* path)
@@ -38,21 +38,34 @@ pages_init(const char* path)
     pages_base = mmap(0, NUFS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, pages_fd, 0);
     assert(pages_base != MAP_FAILED);
 
+    printf("inode size: %ld\n", sizeof(inode));
+
     void* pbm = get_pages_bitmap();
-    void* ibm = get_inode_bitmap();
-    bitmap_put(pbm, 0, 1);
-    bitmap_put(pbm, 1, 1);
-    bitmap_put(ibm, 0, 1);
-    bitmap_put(ibm, 1, 1);
+    if (bitmap_get(pbm, 0) == 0) {
+        printf("This is a fresh mount.\n");
+        void* ibm = get_inode_bitmap();
+        bitmap_put(pbm, 0, 1);
+        bitmap_put(pbm, 1, 1);
+        bitmap_put(ibm, 0, 1);
+        bitmap_put(ibm, 1, 1);
 
-    rootinum = alloc_inode();
-    inode* root = get_inode(rootinum);
-    root->refs = 1;
-    root->mode = 040755;
-    root->size = 0;
+        // root
+        bitmap_put(ibm, rootinum, 1);
+        inode* root = get_inode(rootinum);
+        root->ptrs[0] = -1;
+        root->ptrs[1] = -1;
+        root->iptr = -1;
+        root->refs = 1;
+        root->mode = 040755;
+        root->size = 0;
 
-    //directory* newdir = (directory*)page;
-    //directory_init(root, rootinum, rootinum, "/");
+        //directory* newdir = (directory*)page;
+        directory_init(root, rootinum, rootinum, "/");
+    } 
+    else {
+        printf("This is a remount.\n");
+    }
+    
     //printf("Made Directory: %s, in inode: %d\n", newdir->dirname, newdir->inum);
     //directory_put(root, ".", 2);
 }
@@ -92,6 +105,7 @@ get_inodes()
 
 int
 get_root_inode() {
+    //printf("Getting root inode %d!\n", rootinum);
     return rootinum;
 }
 
