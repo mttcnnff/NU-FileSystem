@@ -31,8 +31,8 @@ int
 bitmap_get(void* bm, int ii) {
 	int byte = ii / 8;
 	int bit = ii % 8;
-	int offset = byte * sizeof(uint8_t);
-	int b = getBit(*(uint8_t*)bm + offset, 7 - bit);
+	uint8_t* bmu = bm;
+	int b = getBit(bmu[byte], 7 - bit);
 	return b;
 }
 
@@ -45,6 +45,10 @@ bitmap_put(void* bm, int ii, int vv) {
 
 }
 
-// void bitmap_print(void* bm, int size) {
-
-// }
+void 
+bitmap_print(void* bm, int size) {
+	uint8_t* bitmap = (uint8_t*)bm;
+	for (int i = 0; i < size; i++) {
+		toBinary(bitmap[i]);
+	}
+}

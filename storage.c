@@ -5,6 +5,7 @@
 #include "util.h"
 #include <stdio.h>
 #include <string.h>
+#include <bsd/string.h>
 
 void storage_init(const char* path) {
 	//printf("Initializing Storage: %s\n", path);
@@ -112,6 +113,9 @@ storage_unlink(const char* path) {
 
 int    
 storage_write(const char* path, const char* buf, size_t size, off_t offset) {
+	printf("WRITING: %s\n", buf);
+
+
 	int inum = tree_lookup(path);
 	if (inum == -1) {
 		printf("ERROR:STORAGE-WRITE: %s d.n.e.\n", path);
@@ -119,24 +123,89 @@ storage_write(const char* path, const char* buf, size_t size, off_t offset) {
 	}
 
 	inode* node = get_inode(inum);
-	int pages[15];
+	int pages[20] = {0};
 	int pages_count;
-	grow_inode(node, 4);
-	grow_inode(node, 4);
-	grow_inode(node, 3000);
-	grow_inode(node, 6000);
-	grow_inode(node, 9000);
-	grow_inode(node, 20000);
-	// if (offset + size > node->size) {
-	// 	grow_inode(node, offset + size);
-	// }
+	if (offset + size > node->size) {
+		grow_inode(node, offset + size);
+	}
+	get_pages(node, pages, &pages_count);
+
+	int pageindex = offset / 4096;
+	int pageoffset = offset % 4096;
+	
+	int bytes_written = 0;
+	for (int i = pageindex; i < pages_count; i++) {
+		int pnum = pages[pageindex];
+		printf("Writing to page %d:%d\n", pageindex, pnum);
+		void* writepoint = pages_get_page(pnum) + pageoffset;
+		int blockspace = 4096 - pageoffset;
+		printf("blockspace: %d\n", blockspace);
+
+		if (size > blockspace) {
+			printf("Size left was bigger than blockspace\n");
+			memcpy(writepoint, buf + bytes_written, blockspace);
+			size = size - blockspace;
+			bytes_written = bytes_written + blockspace;
+		} else {
+			printf("Size left was < blockspace\n");
+			//we're able to write all the bytes written
+			memcpy(writepoint, buf + bytes_written, size);
+			printf("WROTE: %s\n", (char*)writepoint);
+			bytes_written = bytes_written + size;
+			break;
+		}
+		pageoffset = 0;
+	}
+
+	return bytes_written;
+}
+
+int
+storage_read(const char* path, char* buf, size_t size, off_t offset) {
+	printf("Buf: %s\n", buf);
 
 
+	int inum = tree_lookup(path);
+	if (inum == -1) {
+		printf("ERROR:STORAGE-READ: %s d.n.e.\n", path);
+		return -1;
+	}
 
-	return 0;
-	/*
-    1) if offset + size > node size -> grow the inode to the necessary size
-    2) get start point to write at
-    3) 
-    */
+	inode* node = get_inode(inum);
+	int pages[20] = {0};
+	int pages_count;
+	if (offset > node->size) {
+		printf("Offset at past eof!");
+		return 0;
+	}
+	get_pages(node, pages, &pages_count);
+
+	int pageindex = offset / 4096;
+	int pageoffset = offset % 4096;
+	
+	int bytes_read = 0;
+	for (int i = pageindex; i < pages_count; i++) {
+		int pnum = pages[pageindex];
+		printf("Reading page %d:%d\n", pageindex, pnum);
+		void* readpoint = pages_get_page(pnum) + pageoffset;
+		char* readpointstring = ((char*) readpoint);
+		int blockspace = 4096 - pageoffset;
+		printf("blockspace: %d\n", blockspace);
+
+		if (size > blockspace) {
+			printf("Size left was bigger than blockspace\n");
+			memcpy(buf + bytes_read, readpointstring, blockspace);
+			size = size - blockspace;
+			bytes_read = bytes_read + blockspace;
+		} else {
+			printf("Size left was <= 0\n");
+			//we're able to write all the bytes written
+			memcpy(buf + bytes_read, readpointstring, size);
+			bytes_read = bytes_read + size;
+			break;
+		}
+		pageoffset = 0;
+	}
+
+	return bytes_read;
 }

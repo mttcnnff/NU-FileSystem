@@ -116,7 +116,7 @@ tree_lookup(const char* path) {
 	int inum = -1;
 	inode* currinode = rootinode;
 	while (curr != NULL) {
-		printf("Looking at: %s\n", curr->data);
+		//printf("Looking at: %s\n", curr->data);
 
 		inum = directory_lookup(currinode, curr->data);
 		if (inum == -1) {
@@ -128,7 +128,7 @@ tree_lookup(const char* path) {
 	}
 
 	if (curr == NULL) {
-		printf("Found %s\n", path);
+		//printf("Found %s\n", path);
 		return inum;
 	} else {
 		printf("Nothing found at: %s\n", path);

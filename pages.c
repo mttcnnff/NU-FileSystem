@@ -52,7 +52,7 @@ pages_init(const char* path)
     root->size = 0;
 
     //directory* newdir = (directory*)page;
-    directory_init(root, rootinum, rootinum, "/");
+    //directory_init(root, rootinum, rootinum, "/");
     //printf("Made Directory: %s, in inode: %d\n", newdir->dirname, newdir->inum);
     //directory_put(root, ".", 2);
 }
@@ -105,8 +105,11 @@ alloc_page()
 {
     void* pbm = get_pages_bitmap();
 
-    for (int ii = 2; ii < PAGE_COUNT; ++ii) {
-        if (!bitmap_get(pbm, ii)) {
+    // printf("BEFORE PAGE ALLOC:\n");
+    // bitmap_print(pbm, 32);
+
+    for (int ii = 2; ii < PAGE_COUNT; ii++) {
+        if (bitmap_get(pbm, ii) == 0) {
             bitmap_put(pbm, ii, 1);
             printf("+ alloc_page() -> %d\n", ii);
             return ii;

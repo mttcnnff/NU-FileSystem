@@ -23,6 +23,6 @@ int shrink_inode(inode* node, int size);
 int inode_get_pnum(inode* node, int fpn);
 int is_file(inode* node);
 int is_dir(inode* node);
-void get_pages(int pages[], int* pages_count);
+void get_pages(inode* node, int pages[], int* pages_count);
 
 #endif

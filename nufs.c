@@ -35,7 +35,7 @@ nufs_access(const char *path, int mask) {
     }
 
     printf("access(%s, %04o) -> %d\n", path, mask, rv);     
-    return rv; 
+    return 0; 
 }
 
 //
@@ -49,6 +49,7 @@ nufs_getattr(const char *path, struct stat *st)
     int rv = storage_stat(path, st);
 
     if (rv == -1) {
+        printf("ENONENT!\n");
         rv = -ENOENT;
     }
 
@@ -68,7 +69,7 @@ nufs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     slist* entries = storage_list(path);
 
     struct stat st;
-    int rv;
+    int rv = 0;
 
     slist* curr = entries;
     char fullpath[300];
@@ -77,7 +78,7 @@ nufs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         strcpy(fullpath, path);
         char* filename = curr->data;
         join_to_path(fullpath, filename);
-        printf("LS: %s\n", fullpath);
+        //printf("LS: %s\n", fullpath);
 
         storage_stat(fullpath, &st);
         filler(buf, filename, &st, 0);
@@ -86,7 +87,7 @@ nufs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     }
 
     printf("readdir(%s) -> %d\n", path, rv);
-    return 0;
+    return rv;
 }
 
 //
@@ -258,8 +259,7 @@ nufs_open(const char *path, struct fuse_file_info *fi)
 int
 nufs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-    int rv = 6;
-    strcpy(buf, "hello\n");
+    int rv = storage_read(path, buf, size, offset);
     printf("read(%s, %ld bytes, @+%ld) -> %d\n", path, size, offset, rv);
     return rv;
 }
@@ -268,8 +268,7 @@ nufs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_fi
 int
 nufs_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-    storage_write(path, buf, size, offset);
-    int rv = -1;
+    int rv = storage_write(path, buf, size, offset);
     printf("write(%s, %ld bytes, @+%ld) -> %d\n", path, size, offset, rv);
     return rv;
 }
@@ -325,7 +324,6 @@ int
 main(int argc, char *argv[])
 {
     assert(argc > 2 && argc < 6);
-    //printf("TODO: mount %s as data file\n", argv[--argc]);
     storage_init(argv[--argc]);
     nufs_init_ops(&nufs_ops);
     return fuse_main(argc, argv, &nufs_ops, NULL);
