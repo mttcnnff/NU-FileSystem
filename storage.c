@@ -115,7 +115,7 @@ storage_unlink(const char* path) {
 
 int    
 storage_write(const char* path, const char* buf, size_t size, off_t offset) {
-	printf("WRITING: %s\n", buf);
+	//printf("WRITING: %s\n", buf);
 
 
 	int inum = tree_lookup(path);
@@ -142,8 +142,8 @@ storage_write(const char* path, const char* buf, size_t size, off_t offset) {
 	
 	int bytes_written = 0;
 	for (int i = pageindex; i < pages_count; i++) {
-		int pnum = pages[pageindex];
-		printf("Writing to page %d:%d\n", pageindex, pnum);
+		int pnum = pages[i];
+		printf("Writing to page %d:%d\n", i, pnum);
 		char* p = pages_get_page(pnum);
 		for (int i = 0; i < 4096; i++) {
 			if (p[i] != 0) {
@@ -167,7 +167,7 @@ storage_write(const char* path, const char* buf, size_t size, off_t offset) {
 
 			//we're able to write all the bytes written
 			memcpy(writepoint, buf + bytes_written, size);
-			printf("WROTE: %s\n", (char*)writepoint);
+			//printf("WROTE: %s\n", (char*)writepoint);
 			bytes_written = bytes_written + size;
 			break;
 		}
@@ -202,8 +202,8 @@ storage_read(const char* path, char* buf, size_t size, off_t offset) {
 	
 	int bytes_read = 0;
 	for (int i = pageindex; i < pages_count; i++) {
-		int pnum = pages[pageindex];
-		printf("Reading page %d:%d\n", pageindex, pnum);
+		int pnum = pages[i];
+		printf("Reading page %d:%d\n", i, pnum);
 		void* readpoint = pages_get_page(pnum) + pageoffset;
 		char* readpointstring = ((char*) readpoint);
 		int blockspace = 4096 - pageoffset;
