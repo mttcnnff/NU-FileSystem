@@ -29,17 +29,17 @@ directory_get_dirent(dirent* first, int entnum) {
 
 dirent* 
 alloc_dirent(dirent* first) {
-	printf("Size of dirent: %ld\n", sizeof(dirent));
+	//printf("Size of dirent: %ld\n", sizeof(dirent));
 	dirent* curr = first;
 	for (int i = 0; i < MAX_ENTRIES; i++) {
 		if (curr->used == 1) {
-			printf("dirent %d used: %s\n", i, curr->name);
+			//printf("dirent %d used: %s\n", i, curr->name);
 			curr = (void*)curr + sizeof(dirent);
 			continue;
 		}
 
-		printf("Free dirent found at: %d\n", i);
-		printf("@ address: %p\n", (void*)curr);
+		// printf("Free dirent found at: %d\n", i);
+		// printf("@ address: %p\n", (void*)curr);
 		return curr;
 
 	}
@@ -56,13 +56,13 @@ free_dirent(dirent* entry) {
 int
 directory_put(inode* dd, const char* name, int inum) {
 	int pnum = dd->ptrs[0];
-	printf("Putting into directory at page %d\n", pnum);
+	//printf("Putting into directory at page %d\n", pnum);
 	void* page = pages_get_page(pnum);
-	printf("Page address: %p\n", page);
+	//printf("Page address: %p\n", page);
 
 	dirent* first = (dirent*)page;
-	printf("First dirent: %s\n", first->name);
-	printf("@ address: %p\n", (void*)first);
+	//printf("First dirent: %s\n", first->name);
+	//printf("@ address: %p\n", (void*)first);
 	dirent* open = alloc_dirent(first);
 
 	if (open == NULL) {
@@ -74,7 +74,6 @@ directory_put(inode* dd, const char* name, int inum) {
 	open->inum = inum;
 	memset(open->name, '\0', strlen(name + 1));
 	strncpy(open->name, name, strlen(name));
-	print_directory(dd);
 
 	return 0;
 }

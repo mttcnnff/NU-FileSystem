@@ -3,6 +3,7 @@
 #include "inode.h"
 #include "directory.h"
 #include "util.h"
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <bsd/string.h>
@@ -13,7 +14,6 @@ void storage_init(const char* path) {
 }
 
 int storage_stat(const char* path, struct stat* st) {
-
 	int inum = tree_lookup(path);
 	if (inum == -1) {
 		return -1;
@@ -225,4 +225,113 @@ storage_read(const char* path, char* buf, size_t size, off_t offset) {
 	}
 
 	return bytes_read;
+}
+
+int    
+storage_rename(const char *from, const char *to) {
+	int rv;
+
+    int inumfrom = tree_lookup(from);
+    if (inumfrom == -1) {
+        printf("ERROR-rename-from: %s d.n.e.\n", from);
+        return -1;
+    }
+    inode* nodefrom = get_inode(inumfrom);
+
+    int from_parent_inum = get_parent_directory(from);
+    inode* node_from_parent = get_inode(from_parent_inum);
+
+    int to_parent_inum = get_parent_directory(to);
+    if (to_parent_inum == -1) {
+        printf("ERROR-rename-to: %s d.n.e.\n", to);
+    }
+    inode* node_to_parent = get_inode(to_parent_inum);
+
+
+    char fromname[200];
+    get_filename(fromname, from);
+    directory_delete(node_from_parent, fromname);
+
+    int inumto = tree_lookup(to);
+    if (inumto == -1) {
+        // doesnt exist, add entry with new name in parent to directory
+        char toname[200];
+        get_filename(toname, to);
+        directory_put(node_to_parent, toname, inumfrom);
+        return 0;
+
+    } 
+    inode* nodeto = get_inode(inumto);
+
+    // does exist
+
+    if (is_file(nodeto) && is_file(nodefrom)) {
+        // rename
+        char newname[200];
+        get_filename(newname, to);
+        directory_put(node_to_parent, newname, inumfrom);
+        return 0;
+    }
+
+    if (is_dir(nodeto)) {
+        //if to is a directory -> put entry in to directory
+        char fromnewname[200];
+        get_filename(fromnewname, from);
+        directory_put(node_to_parent, fromnewname, inumfrom);
+        return 0;
+
+    }
+    return -1;
+}
+
+int    
+storage_link(const char *from, const char *to) {
+	int rv;
+
+	int inumfrom = tree_lookup(from);
+	if (inumfrom == -1) {
+        printf("ERROR-link-from: %s d.n.e.\n", from);
+        return -ENOENT;
+    }
+    inode* nodefrom = get_inode(inumfrom);
+
+    if (is_file(nodefrom) != 1) {
+    	printf("ERROR-link-from: %s is not a file.\n", from);
+    	return -EPERM;
+    }
+
+    int inumto = tree_lookup(to);
+    inode* nodeto;
+    char newentry[200];
+    if (inumto == -1) {
+    	char parentpath[200];
+    	get_parent_path(parentpath, to);
+    	inumto = tree_lookup(parentpath);
+    	if (inumto == -1) {
+    		printf("ERROR-link-to: %s d.n.e.\n", parentpath);
+    		return -ENONET;
+    	}
+    	nodeto = get_inode(inumto);
+    	get_filename(newentry, to);
+    } else {
+    	nodeto = get_inode(inumto);
+    	if (is_file(nodeto)) {
+    		printf("ERROR-link-to: %s is an already existing file.", to);
+    		return -EEXIST;
+    	}
+    	get_filename(newentry, from);
+    }
+
+    //nodeto is directory to place entry
+
+    nodefrom->refs++;
+    directory_put(nodeto, newentry, inumfrom);
+    return 0;
+
+
+    // nodeto is defined
+
+
+
+
 }
