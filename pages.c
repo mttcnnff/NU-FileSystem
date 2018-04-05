@@ -24,7 +24,7 @@ const int NUFS_SIZE  = 4096 * 256; // 1MB
 
 static int   pages_fd   = -1;
 static void* pages_base =  0;
-static int   rootinum = 2;
+static int   rootinum = 3;
 
 void
 pages_init(const char* path)
@@ -41,13 +41,14 @@ pages_init(const char* path)
     printf("inode size: %ld\n", sizeof(inode));
 
     void* pbm = get_pages_bitmap();
+    void* ibm = get_inode_bitmap();
     if (bitmap_get(pbm, 0) == 0) {
         printf("This is a fresh mount.\n");
-        void* ibm = get_inode_bitmap();
-        bitmap_put(pbm, 0, 1);
-        bitmap_put(pbm, 1, 1);
-        bitmap_put(ibm, 0, 1);
-        bitmap_put(ibm, 1, 1);
+
+        for (int i = 0; i < rootinum; i++) {
+            bitmap_put(pbm, i, 1);
+            bitmap_put(ibm, i, 1);
+        }
 
         // root
         bitmap_put(ibm, rootinum, 1);

@@ -72,20 +72,18 @@ get_parent_path(char* buf, const char* path) {
     int length = strlen(path);
     int i = length - 1;
     for (i; i > -1; i--) {
-        if (path[i] == '/') {
-            if (i > 0) {
-                i--;
-            }   
+        if (path[i] == '/') {   
             break;
         }
     }
 
+    memset(buf, '\0', sizeof(buf));
+    strcpy(buf, path);
+
     if (i == 0) {
-        memset(buf, '\0', sizeof(buf));
-        strcpy(buf, "/");
+        buf[1] = '\0';
     } else {
-        memset(buf, '\0', sizeof(buf));
-        strncpy(buf, path, i+1);
+        buf[i] = '\0';
     }
 }
 

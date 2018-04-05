@@ -13,7 +13,7 @@ typedef struct dirent {
 } dirent;
 */
 
-const int MAX_ENTRIES = 10;
+const int MAX_ENTRIES = 100;
 
 void 
 directory_init(inode* dd, int inum, int parent_inum, char* name) {
@@ -114,6 +114,7 @@ directory_lookup(inode* dd, const char* name) {
 
 int 
 tree_lookup(const char* path) {
+	printf("Tree lookup: %s\n", path);
 	int rootinum = get_root_inode();
 	inode* rootinode = get_inode(rootinum);
 
@@ -150,9 +151,10 @@ tree_lookup(const char* path) {
 
 int
 get_parent_directory(const char* path) {
-
+	printf("getting_parent_dir: %s\n", path);
 	char parenpath[200];
 	get_parent_path(parenpath, path);
+	printf("parent path found: %s\n", parenpath);
 
 	return tree_lookup(parenpath);
 }

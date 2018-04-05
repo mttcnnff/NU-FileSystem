@@ -37,7 +37,7 @@ print_inode(inode* node) {
 inode* 
 get_inode(int inum) {
 	void* inode0 = get_inodes();
-	return (inode*)(inode0 + (inum*sizeof(inode)));
+	return inode0 + (inum * sizeof(inode));
 }
 
 int
