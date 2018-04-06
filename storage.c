@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <bsd/string.h>
+#include <sys/stat.h>
 
 void storage_init(const char* path) {
 	//printf("Initializing Storage: %s\n", path);
@@ -331,8 +332,74 @@ storage_link(const char *from, const char *to) {
 
 
     // nodeto is defined
+}
 
 
+// to -> file that is being pointed to
+// from -> name of symlink being created
+int    
+storage_symlink(const char* to, const char* from) {
+	int inumfrom = tree_lookup(from);
+    inode* nodefrom;
+    char newentry[200];
+    if (inumfrom == -1) {
+    	char parentpath[200];
+    	get_parent_path(parentpath, from);
+    	inumfrom = tree_lookup(parentpath);
+    	if (inumfrom == -1) {
+    		printf("ERROR-link-from: %s d.n.e.\n", parentpath);
+    		return -ENONET;
+    	}
+    	nodefrom = get_inode(inumfrom);
+    	get_filename(newentry, from);
+    } else {
+    	nodefrom = get_inode(inumfrom);
+    	if (is_file(nodefrom)) {
+    		printf("ERROR-link-from: %s is an already existing file.", from);
+    		return -EEXIST;
+    	}
+    	get_filename(newentry, to);
+    }
+
+    //node from is directory to place new entry
+    //newentry is name of the entry
+    //to is the contents of the entry
+
+    int inumsym = alloc_inode();
+    inode* symnode = get_inode(inumsym);
+    symnode->mode = S_IFLNK | 0777;
+    symnode->size = strlen(to);
+    symnode->refs = 1;
+    grow_inode(symnode, symnode->size);
+    void* sympage = pages_get_page(symnode->ptrs[0]);
+    memcpy(sympage, to, symnode->size);
 
 
+    return directory_put(nodefrom, newentry, inumsym);
+
+}
+
+int 
+storage_readlink (const char* path, char* buf, size_t size) {
+	int inumsym = tree_lookup(path);
+	if (inumsym == -1) {
+		printf("ERROR-readlink-path: %s d.n.e.\n", path);
+		return -1;
+	}
+	inode* symnode = get_inode(inumsym);
+
+	if ((symnode->mode & S_IFMT) != S_IFLNK) {
+		printf("ERROR-readlink-path: %s is not a symlink.\n", path);
+		return -1;
+	}
+
+	void* sympage = pages_get_page(symnode->ptrs[0]);
+	memset(buf, '\0', size);
+
+	if (size > symnode->size) {
+		memcpy(buf, sympage, symnode->size);
+	} else {
+		memcpy(buf, sympage, size);
+	}
+	return 0;
 }
