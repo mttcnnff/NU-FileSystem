@@ -182,6 +182,7 @@ nufs_chmod(const char *path, mode_t mode)
         return -1;
     }
     inode* node = get_inode(inum);
+    u_ch_time(node);
     node->mode = mode;
     int rv = 0;
     printf("chmod(%s, %04o) -> %d\n", path, mode, rv);
@@ -229,6 +230,8 @@ nufs_write(const char *path, const char *buf, size_t size, off_t offset, struct 
 // DONE
 //
 // Update the timestamps on a file or directory.
+// ts[0] -> last access time
+// ts[1] -> last modification time
 int
 nufs_utimens(const char* path, const struct timespec ts[2])
 {
@@ -263,7 +266,6 @@ nufs_readlink (const char* path, char* buf, size_t size)
     printf("readlink(%s, %ld bytes) -> (%d)\n", path, size, rv);
     return rv;
 }
-
 
 
 void

@@ -11,7 +11,9 @@ typedef struct inode {
     int size; // bytes
     int ptrs[2]; // direct pointers to pages
     int iptr; // single indirect to page of pnums
-    time_t timestamp; //last edited?
+    time_t acctime; //last edited?
+    time_t modtime;
+    time_t chtime;
 } inode;
 
 void print_inode(inode* node);
@@ -24,5 +26,9 @@ int inode_get_pnum(inode* node, int fpn);
 int is_file(inode* node);
 int is_dir(inode* node);
 void get_pages(inode* node, int pages[], int* pages_count);
+
+void u_acc_time(inode* node);
+void u_mod_time(inode* node);
+void u_ch_time(inode* node);
 
 #endif

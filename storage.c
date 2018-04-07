@@ -27,8 +27,9 @@ int storage_stat(const char* path, struct stat* st) {
 	st->st_gid = getgid();
 	st->st_nlink = 1;
 	st->st_mode = info->mode;
-	st->st_atime = time(NULL);
-	st->st_mtime = time(NULL);
+	st->st_atime = info->acctime;
+	st->st_mtime = info->modtime;
+	st->st_ctime = info->chtime;
 	st->st_size = info->size;
 	return 0;
 }
@@ -48,6 +49,9 @@ int storage_mknod(const char* path, int mode) {
 	newnode->refs = 1;
 	newnode->mode = mode;
 	newnode->size = 0;
+	u_acc_time(newnode);
+    u_mod_time(newnode);
+    u_ch_time(newnode);
 
 	int parent_inum = get_parent_directory(path);
 	if (parent_inum == -1) {
@@ -70,6 +74,8 @@ int storage_mknod(const char* path, int mode) {
 // int    storage_unlink(const char* path);
 // int    storage_link(const char *from, const char *to);
 // int    storage_rename(const char *from, const char *to);
+// ts[0] -> last access time
+// ts[1] -> last modification time
 int storage_set_time(const char* path, const struct timespec ts[2]) {
 	int inum = tree_lookup(path);
 	if (inum == -1) {
@@ -79,7 +85,9 @@ int storage_set_time(const char* path, const struct timespec ts[2]) {
 
 	inode* node = get_inode(inum);
 
-	node->timestamp = ts->tv_sec;
+	node->acctime = ts[0].tv_sec;
+	node->modtime = ts[1].tv_sec;
+    u_ch_time(node);
 	return 0;
 }
 
@@ -104,6 +112,8 @@ storage_unlink(const char* path) {
 	if (rv == -1) {
 		return -1;
 	}
+	inode* unlinked = get_inode(inum);
+	u_ch_time(unlinked);
 
 	int parent_inum = get_parent_directory(path);
 	inode* parent_inode = get_inode(parent_inum);
@@ -127,6 +137,8 @@ storage_write(const char* path, const char* buf, size_t size, off_t offset) {
 	}
 
 	inode* node = get_inode(inum);
+    u_mod_time(node);
+    u_ch_time(node);
 	int pages[20] = {0};
 	int pages_count;
 	if (offset + size > node->size) {
@@ -191,6 +203,7 @@ storage_read(const char* path, char* buf, size_t size, off_t offset) {
 	}
 
 	inode* node = get_inode(inum);
+	u_acc_time(node);
 	int pages[20] = {0};
 	int pages_count;
 	if (offset > node->size) {
@@ -325,7 +338,7 @@ storage_link(const char *from, const char *to) {
     }
 
     //nodeto is directory to place entry
-
+    u_ch_time(nodefrom);
     nodefrom->refs++;
     directory_put(nodeto, newentry, inumfrom);
     return 0;

@@ -4,6 +4,7 @@
 #include "util.h"
 #include <stdio.h>
 #include <sys/stat.h>
+#include <time.h>
 
 // typedef struct inode {
 //     int refs; // reference count
@@ -164,4 +165,21 @@ get_pages(inode* node, int pages[], int* pages_count) {
 		}
 		pages[i] = indirects[i-2];
 	}
+}
+
+void 
+u_acc_time(inode* node) {
+	time(&(node->acctime));
+}
+
+
+void 
+u_mod_time(inode* node) {
+	time(&(node->modtime));
+}
+
+
+void 
+u_ch_time(inode* node) {
+	time(&(node->chtime));
 }

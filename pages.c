@@ -58,7 +58,10 @@ pages_init(const char* path)
         root->iptr = -1;
         root->refs = 1;
         root->mode = 040755;
-        root->size = 0;
+        root->size = 4096;
+        u_acc_time(root);
+        u_mod_time(root);
+        u_ch_time(root);
 
         //directory* newdir = (directory*)page;
         directory_init(root, rootinum, rootinum, "/");
