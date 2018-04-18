@@ -244,7 +244,6 @@ storage_read(const char* path, char* buf, size_t size, off_t offset) {
 
 int    
 storage_rename(const char *from, const char *to) {
-	int rv;
 
     int inumfrom = tree_lookup(from);
     if (inumfrom == -1) {
@@ -301,7 +300,6 @@ storage_rename(const char *from, const char *to) {
 
 int    
 storage_link(const char *from, const char *to) {
-	int rv;
 
 	int inumfrom = tree_lookup(from);
 	if (inumfrom == -1) {

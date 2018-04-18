@@ -66,8 +66,6 @@ int
 nufs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
              off_t offset, struct fuse_file_info *fi)
 {
-    int inum = tree_lookup(path);
-    inode* node = get_inode(inum);
     slist* entries = storage_list(path);
 
     struct stat st;

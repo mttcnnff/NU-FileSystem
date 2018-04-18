@@ -1,0 +1,16 @@
+
+
+SRCS := $(wildcard *.c)
+BINS := $(SRCS:.c=)
+
+CC=gcc
+CFLAGS := -Wall -Werror
+
+all: $(BINS)
+
+%: %.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+clean:
+	rm -f $(BINS) *.o
+

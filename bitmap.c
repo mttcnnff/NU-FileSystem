@@ -21,9 +21,9 @@ getBit(uint8_t a, int i) {
 static void 
 setBit(uint8_t* a, int i, int v) {
 	if (v == 0) {
-		*a &= ~(0x01 << 7 - i);
+		*a &= ~(0x01 << (7 - i));
 	} else {
-		*a |= 0x01 << 7 - i;
+		*a |= 0x01 << (7 - i);
 	}
 }
 

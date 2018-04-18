@@ -68,9 +68,9 @@ free_inode(int inum) {
 		return -1;
 	}
 	void* ibm = get_inode_bitmap();
-	int inode_max = get_inode_max();
 
 	inode* node = get_inode(inum);
+	bitmap_put(ibm, inum, 0);
 	if (node->refs > 1) {
 		node->refs = node->refs - 1;
 		return 0;
@@ -80,6 +80,7 @@ free_inode(int inum) {
 	node->size = 0;
 	free_page(node->ptrs[0]);
 	free_page(node->ptrs[1]);
+
 	return 0;
 }
 
